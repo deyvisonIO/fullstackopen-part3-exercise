@@ -169,5 +169,5 @@ app.get("/info", (req, res) => {
 	res.end()
 })
 
-
-app.listen(3001, () => console.log("Server running!"))
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log("Server running!"))
