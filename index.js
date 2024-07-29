@@ -1,30 +1,11 @@
+require("dotenv").config()
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const Person = require("./models/person");
+
 
 const app = express();
-let people = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
 
 morgan.token("req-body", function(req, res) {
 	if(req.method === 'POST') return JSON.stringify(req.body);
@@ -38,12 +19,15 @@ app.use(express.static("dist"))
 
 
 app.get("/api/persons", (req, res) => {
-	res.json(people);
+	Person.find({}).then(result => {
+		res.json(result);
+	})
 })
 
 
 app.post("/api/persons", (req, res) => {
-	const { id, name, number } = req.body;
+	const { name, number } = req.body;
+	const personToBeAdded = { name, number }
 
 
 	if(!id) {
@@ -64,19 +48,18 @@ app.post("/api/persons", (req, res) => {
 		return;
 	}
 
-	if(people.some(person => person.name === name)) {
-		res.status(400);
-		res.json({ message: "Name must be unique"})
-		return;
-	}
-
-	people.push({
-		id,
-		name,
-		number,
-	});
-
-	res.json({ id, name, number });
+	Person.find(personToBeAdded).then(result => {
+		if(result.length === 0) {
+			res.status(400);
+			res.json({ message: "Name must be unique"})
+			return;
+		} else {
+		 Person.create(personToBeAdded).then(result => {
+			res.json(result);	
+			return;
+		})
+		}	
+	})	
 })
 
 
