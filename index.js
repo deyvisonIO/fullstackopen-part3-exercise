@@ -27,7 +27,7 @@ app.use(
 app.use(express.json());
 app.use(express.static("dist"));
 
-app.get("/api/persons", (req, res) => {
+app.get("/api/persons", (req, res, next) => {
   Person.find({})
     .then((result) => {
       if (result) {
@@ -39,7 +39,7 @@ app.get("/api/persons", (req, res) => {
     }).catch(err => next(err));
 });
 
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const { name, number } = req.body;
   const personToBeAdded = { name, number };
 
@@ -69,7 +69,7 @@ app.post("/api/persons", (req, res) => {
   }).catch(err => next(err));
 });
 
-app.put("/api/persons/:id", (req, res) => {
+app.put("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   const { name, number } = req.body;
 
@@ -102,7 +102,7 @@ app.put("/api/persons/:id", (req, res) => {
   }).catch(err => next(err));
 });
 
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
 
   if (!id) {
@@ -120,7 +120,7 @@ app.get("/api/persons/:id", (req, res) => {
   }).catch(err => next(err));
 });
 
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
 
   if (!id) {
@@ -137,7 +137,7 @@ app.delete("/api/persons/:id", (req, res) => {
   }).catch(err => next(err));
 });
 
-app.get("/info", (req, res) => {
+app.get("/info", (req, res, next) => {
   const date = new Date();
 
 	Person.countDocuments({}).then(result => {
