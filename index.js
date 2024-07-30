@@ -13,7 +13,6 @@ morgan.token('req-body', function (req) {
 
 function errorHandler(err, req, res, next) {
   console.log(err.message)
- 
   if(err.name === 'ValidatorError' | err.name === 'ValidationError') {
     res.status(400).send(err.message)
   } else if(err.name === 'CastError') {
