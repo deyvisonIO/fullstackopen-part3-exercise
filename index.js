@@ -12,7 +12,7 @@ morgan.token("req-body", function (req, res) {
 });
 
 
-function errorHandler(err) => {
+function errorHandler(err) {
 	console.log(err);
 	res.status(500).end();
 	next();
