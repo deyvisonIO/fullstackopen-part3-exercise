@@ -11,6 +11,13 @@ morgan.token("req-body", function (req, res) {
   return "";
 });
 
+
+function errorHandler(err) => {
+	console.log(err);
+	res.status(500).end();
+	next();
+}
+
 app.use(cors());
 app.use(
   morgan(
@@ -29,11 +36,7 @@ app.get("/api/persons", (req, res) => {
       }
 
       res.status(404).end();
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).end();
-    });
+    }).catch(err => next(err));
 });
 
 app.post("/api/persons", (req, res) => {
@@ -63,7 +66,7 @@ app.post("/api/persons", (req, res) => {
         return;
       });
     }
-  });
+  }).catch(err => next(err));
 });
 
 app.put("/api/persons/:id", (req, res) => {
@@ -96,7 +99,7 @@ app.put("/api/persons/:id", (req, res) => {
     }
     res.json(result);
     return;
-  });
+  }).catch(err => next(err));
 });
 
 app.get("/api/persons/:id", (req, res) => {
@@ -114,7 +117,7 @@ app.get("/api/persons/:id", (req, res) => {
     }
 
     res.json(result);
-  });
+  }).catch(err => next(err));
 });
 
 app.delete("/api/persons/:id", (req, res) => {
@@ -131,17 +134,20 @@ app.delete("/api/persons/:id", (req, res) => {
       return;
     }
     res.json(result);
-  });
+  }).catch(err => next(err));
 });
 
 app.get("/info", (req, res) => {
   const date = new Date();
-  const length = people.length;
 
-  res.write(`<p>Phonebook has info for ${length} people</p>`);
-  res.write(`<p>${date}</p>`);
-  res.end();
+	Person.countDocuments({}).then(result => {
+	  res.write(`<p>Phonebook has info for ${result} people</p>`);
+	  res.write(`<p>${date}</p>`);
+	  res.end();
+	}).catch(err => next(err));
 });
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log("Server running!"));
