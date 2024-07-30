@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const Person = require("./models/person");
+const mongoose = require("mongoose");
 
 const app = express();
 
@@ -11,11 +12,17 @@ morgan.token("req-body", function (req, res) {
   return "";
 });
 
-
-function errorHandler(err) {
-	console.log(err);
-	res.status(500).end();
-	next();
+function errorHandler(err, req, res, next) {
+  console.log(err.message);
+ 
+  if(err.name === "ValidatorError" | err.name === "ValidationError") {
+    res.status(400).send(err.message);
+  } else if(err.name === "CastError") {
+    res.status(400).send("Malformed id")
+  } else {
+    res.status(400).send("Malformed id")
+  }
+  next();
 }
 
 app.use(cors());
@@ -36,7 +43,8 @@ app.get("/api/persons", (req, res, next) => {
       }
 
       res.status(404).end();
-    }).catch(err => next(err));
+    })
+    .catch((err) => next(err));
 });
 
 app.post("/api/persons", (req, res, next) => {
@@ -55,23 +63,24 @@ app.post("/api/persons", (req, res, next) => {
     return;
   }
 
-  Person.find(personToBeAdded).then((result) => {
-    if (result.length > 0) {
-      res.status(400);
-      res.json({ message: "Name must be unique" });
-      return;
-    } else {
-      Person.create(personToBeAdded).then((result) => {
-        res.json(result);
-        return;
-      });
-    }
-  }).catch(err => next(err));
+  Person.find(personToBeAdded)
+    .then((result) => {
+      if (result.length > 0) {
+        res.status(400);
+        res.json({ message: "Name must be unique" });
+      } else {
+        Person.create(personToBeAdded).then((result) => {
+          res.json(result);
+        }).catch(err => next(err))
+      }
+    })
+    .catch((err) => next(err));
 });
 
 app.put("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   const { name, number } = req.body;
+
 
   if (!id) {
     res.status(400);
@@ -91,15 +100,18 @@ app.put("/api/persons/:id", (req, res, next) => {
     return;
   }
 
-  Person.findByIdAndUpdate(id, { name, number }).then((result) => {
-    if (!result) {
-      res.status(404);
-      res.json({ message: "Person not found" });
+
+  Person.findByIdAndUpdate(id, { name, number }, { new: true })
+    .then((result) => {
+      if (!result) {
+        res.status(404);
+        res.json({ message: "Person not found" });
+        return;
+      }
+      res.json(result);
       return;
-    }
-    res.json(result);
-    return;
-  }).catch(err => next(err));
+    })
+    .catch((err) => next(err));
 });
 
 app.get("/api/persons/:id", (req, res, next) => {
@@ -110,14 +122,16 @@ app.get("/api/persons/:id", (req, res, next) => {
     return;
   }
 
-  Person.findById(id).then((result) => {
-    if (!result) {
-      res.status(404).end();
-      return;
-    }
+  Person.findById(id)
+    .then((result) => {
+      if (!result) {
+        res.status(404).end();
+        return;
+      }
 
-    res.json(result);
-  }).catch(err => next(err));
+      res.json(result);
+    })
+    .catch((err) => next(err));
 });
 
 app.delete("/api/persons/:id", (req, res, next) => {
@@ -128,26 +142,30 @@ app.delete("/api/persons/:id", (req, res, next) => {
     return;
   }
 
-  Person.findByIdAndDelete(id).then((result) => {
-    if (!result) {
-      res.status(404).end();
-      return;
-    }
-    res.json(result);
-  }).catch(err => next(err));
+  Person.findByIdAndDelete(id)
+    .then((result) => {
+      if (!result) {
+        res.status(404).end();
+        return;
+      }
+      res.json(result);
+    })
+    .catch((err) => next(err));
 });
 
 app.get("/info", (req, res, next) => {
   const date = new Date();
 
-	Person.countDocuments({}).then(result => {
-	  res.write(`<p>Phonebook has info for ${result} people</p>`);
-	  res.write(`<p>${date}</p>`);
-	  res.end();
-	}).catch(err => next(err));
+  Person.countDocuments({})
+    .then((result) => {
+      res.write(`<p>Phonebook has info for ${result} people</p>`);
+      res.write(`<p>${date}</p>`);
+      res.end();
+    })
+    .catch((err) => next(err));
 });
 
-app.use(errorHandler)
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log("Server running!"));
